@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>tic tac toe</title>
+	<style type="text/css">
+		.board{
+			width:300px;height:300px;margin:50px auto;
+			border:5px solid #000000;border-radius:10px;
+			position:relative;
+		}
+		.board>.cell{
+			box-sizing:border-box;
+			width:100px;height:100px;line-height:100px;font-size:50px;
+			text-align:center;border:1px solid #000000;cursor:pointer;
+			display:inline-block;vertical-align:middle;
+		}
+		.board>.line{
+			position:absolute;top:0px;left:0px;
+			width:300px;height:300px;
+		}
+	</style>
+	<script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+	<script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+	<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+	<script type="text/babel">
+		// make lines used for the winner
+		class Line extends React.Component{
+			render(){
+				// Basde on the startIndex and endIndex of winner, put svg to the board
+				let startX=this.props.startIndex%3;
+				let startY=Math.floor(this.props.startIndex/3);
+				let endX=this.props.endIndex%3;
+				let endY=Math.floor(this.props.endIndex/3);
+				return <svg className="line"><line x1={startX*100+50} y1={startY*100+50} x2={endX*100+50} y2={endY*100+50} stroke="red" strokeWidth="5" /></svg>;
+			}
+		}
+		// make Cell
+		class Cell extends React.Component{
+			render(){
+				// -1:"", 0:"O", 1:"X"
+				let text="";
+				if(this.props.number===1){
+					text="X";
+				}else if(this.props.number===0){
+					text="O";
+				}
+				return <div className="cell" onClick={this.click.bind(this)}>{text}</div>;
+			}
+			click(){
+				this.props.update(this.props.index);
+			}
+		}
+		// make board for the game
+		class Board extends React.Component{
+			constructor(props){
+				super(props);
+				/*
+					index of each number in the chart
+					0 1 2
+					3 4 5
+					6 7 8
+				*/
+
+				this.state={
+					numbers:[-1, -1, -1, -1, -1, -1, -1, -1, -1], // -1:null, 0: circle, 1:cross
+					circle:0, // number of circles
+					winner:null // initiate the winner
+				};
+			}
+			render(){
+				let cells=[];
+				for(let i=0;i<this.state.numbers.length;i++){
+					// make cell with index, numbers, and updateNumber
+					cells.push(<Cell index={i} number={this.state.numbers[i]}
+				 		update={this.updateNumber.bind(this)} />);
+				}
+				if(this.state.winner!==null){
+					// make a line with startIndex and endIndex
+					cells.push(<Line startIndex={this.state.winner.startIndex}
+						endIndex={this.state.winner.endIndex} />);
+				}
+				return <div className="board">{cells}</div>;
+			}
+
+			updateNumber(index){
+				this.setState((newState)=>{
+					/*
+					  Preconditions:
+						1. the current number must be -1
+						2. there is no winner now
+					*/
+					let currentNumber=newState.numbers[index];
+					if(currentNumber===-1&&newState.winner===null){
+						let number=newState.circle%2; // O or X based on circle
+						newState.numbers[index]=number; // put state(O or X) into numbers
+						let winner=this.checkWinner(newState.numbers); // look for winner based on numbers
+						return {
+							circle:newState.circle+1,
+							numbers:newState.numbers,
+							winner:winner
+						};
+					}
+				});
+			}
+			checkWinner(numbers){
+				/*
+					If there is a winner, return the information of the line
+					{side: O or X, startIndex:index of starting line, endIndex:index of ending line}
+				*/
+				/*
+					the index of every number in chart
+					0 1 2
+					3 4 5
+					6 7 8
+				*/
+				// check whether there is a winner on three horizonal lines
+				let index;
+				for(let y=0;y<3;y++){
+					if(numbers[y*3]!==-1&&numbers[y*3]===numbers[y*3+1]&&numbers[y*3+1]===numbers[y*3+2]){
+						return {side:numbers[y*3], startIndex:y*3, endIndex:y*3+2};
+					}
+				}
+				// check whether there is a winner on three vertical lines
+				for(let x=0;x<3;x++){
+					if(numbers[x]!==-1&&numbers[x]===numbers[3+x]&&numbers[3+x]===numbers[2*3+x]){
+						return {side:numbers[x], startIndex:x, endIndex:2*3+x};
+					}
+				}
+				// check whether there is a winner on three crossing lines
+				if(numbers[0]!==-1&&numbers[0]===numbers[4]&&numbers[4]===numbers[8]){
+					return {side:numbers[0], startIndex:0, endIndex:8};
+				}else if(numbers[2]!==-1&&numbers[2]===numbers[4]&&numbers[4]===numbers[6]){
+					return {side:numbers[2], startIndex:2, endIndex:6};
+				}
+				// if there is no winner
+				return null;
+			}
+		}
+		window.addEventListener("load", ()=>{
+			ReactDOM.render(<Board/>, document.body);
+		});
+	</script>
+</head>
+<body>
+</body>
+</html>
